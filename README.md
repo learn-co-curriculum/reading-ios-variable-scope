@@ -1,167 +1,158 @@
-# Scope: what and why
+# Variable Scope
 
-Imagine if all parts of your code knew about all the variables in all other parts of your code. You'd have to take great care not to accidentally reuse a variable name in multiple places -- `point` may be an x-y coordinate in one place but lat-long elsewhere, and you'd have to keep that all in mind. Yikes!
+## Objectives
 
-Luckily, the visibility of classes, methods, and variables is controlled by what is called **scope**. The things that a particular piece of code can see are called "in scope". Those it cannot are "out of scope".
+1. Know the purpose and value of scope in applications.
+2. Distinguish scope from context, and know how to identify both.
+3. Recognize context inclusion and exclusion.
+4. Avoid the pitfall of unintentional "shadowing".
+5. Realize the value of passing variables "horizontally" through method arguments.
 
-The ins and outs of scope vary dramatically from language to language. Luckily Objective-C keeps it pretty simple.
+## Scope: What and Why?
 
-# The rules
+*By "variable scope" we mean "the scope of variables," not "a scope that varies."*
 
-Essentially there are four rules of scope in Objective-C:
+Imagine if every part of your code knew about every variable in every other part of your code. Since you've only written code in a single file so far, this may be difficult to visualize. But speculate for a moment: what if you worked on an application that contained hundreds or even thousands of files? You'd have to take great care to not accidentally reuse variable names in multiple places and to not overlap your variable names with those of other developers working on different features of the same application. What if, for example, the variable `point` was defined as an "x-y" coordinate in one place, but also as a "latitude-longitude" variable somewhere else? You'd have to keep everything in your mind all at once. What a mess!
 
-1. Scopes inherit from their parent scope.
+Fortunately, the "visibility" of classes, methods, and variables is controlled by what is termed "**scope**". It's a sort of topography to code—the higher the scope of a variable, the more places it's visible, while the lower the scope, the fewer places it's visible. The variables, methods, etc. that a particular place in your code can "see" are referred to as being "in scope" or "in context", while those that it cannot see are "out of scope" or "out of context". It's a scale of general-to-specific, or in programming terms, "global" to "local". 
 
-    ```objc
-    NSInteger x = 2;
-    if(x > 1) {
-        NSLog(@"I know what x is! It's %d.", x);  // The x from the outer scope is available
-        if(x >= 2) {
-            NSLog(@"I also know what x is! It's still %d.", x);  // all the way down
-        }
-    }
-    ```
-    
-2. Curly braces open a new scope
+A "**context**" refers to the lexicon of variables, methods, and classes available at a given location in the program. Autocomplete, our handy tool, references the current context when supplying options—it can only offer the options that it sees in the current context. (*To distinguish "scope" from "context"—an individual code element has a scope, while the context contains many elements.*)
 
-    ```objc
-    if(2 < 4) {
-        NSInteger x = 5;
-    }
-    
-    NSLog(@"x? What's x? Is it %d?", x);  // Compiler error: "Use of undeclared identifier 'x'"
-    ```
-    
-    (*A technical aside* -- it is totally legal to open your own scopes outside of the context of any flow stuff just by adding curly braces around some code. It’s just a little weird, and should probably be taken as a sign that your method is getting too complicated.)
+The particular nature of scope varies dramatically from language to language. Fortunately for us, Objective-C has a pretty straightforward take on it.
 
-3. If a scope is introduced by a statement of some kind (`if`, `while`, `for`, a method definition), and that statement has variable definitions in it, those variables are also scoped to that new block.
+## Metaphor: Levels of Governance
 
-    ```objc
-    NSArray *myArray = @[ @"hello", @"world" ];
-    for(NSUInteger i = 0; i < myArray.count; i++) {
-        NSLog(@"myArray[%lu] is %@", i, myArray[i]);  // i is in scope here
-    }
-    
-    NSLog(@"After the loop, i is %lu", i);  // But not here! Compiler error.
-    ```
+You can think of scope through the metaphor of different levels of governance. The Flatiron School's campus is located in the city of New York, in the county of Manhattan, in the state of New York, in the nation of the United States of America. Each of these levels represents a different "scope" of governance.
 
-4. Code outside of a scope (e.g., at the top of a file) is available across the whole file. This includes definitions of classes and methods, and the contents of `#import`ed things.
+The laws and regulations of each of these levels of jurisdiction apply simultaneously, but at different levels of localization. Crossing the East River into Astoria, New York (state), for example, would put us into Queens county. We would still be within the jurisdiction of the state of New York and within the jurisdiction of the United States of America, but we would have changed locations within the jurisdiction of counties.
 
+Similarly, if we were to cross the Hudson River to the west, we would find ourselves in the state of New Jersey (and no longer governed by the 8.875% New York sales tax). We would, however, still be in the United States of America. It would take travelling northward into the province (state equivalent) of Ontario to put us into the jurisdiction of the nation of Canada. But even then, we'd still be within the scope of the North American continent (though this only a geographic locality and not a level of governance).
 
-Classes have a few small additions, most of which you've already seen:
+It's this sense of scope that allows Astoria, New York and Astoria, Washington to share the same city name; they are, however, unique within their local counties. And on the county level, there is an Orange County, California and an Orange County, Florida; a Marion County, Tennessee and a Marion County, Florida. Again, names that are unique within the jurisdiction (read "scope") of their local states, but which mutually submit to the jurisdiction of the national government.
 
-1. Instance variables from a class are available across all its methods, as is `self`.
-2. Methods inside a class are available from all other methods in that class, regardless of the order in which they are declared.
+Local state, county, and city governments have the authority to pass laws upon their constituencies in order to govern themselves—but in doing so they cannot (legally) contradict the laws of any of their predominant jurisdictions. Traffic laws regarding "right turn on red" is a great example of this. It's illegal in Manhattan to make a right turn at a red light, however, it's permissible in most of the rest of the state of New York. ([NY.gov](http://www.safeny.ny.gov/roadrule.htm))
 
+So how does this image apply to programming?
 
-### Shadowing
+#### The Levels of Scope
 
-So, what happens if we try to reuse a variable name we inherited from an outer scope? Let's see:
+The "levels of governance" for scope begins at the level of an entire application. This is called "global" scope and refers to variables accessible from anywhere in your code. (We'll discuss declaring and using global variables in more detail later.) This is that "national" level of your code—the context that belongs to everything.
+
+Within your application, each of your class files in the project navigator represents their own scopes. These are the first division and be can be seen as the states or provinces to your code. The class files use `@interface` & `@end` or `@implementation` & `@end` to enclose the declarations of their scopes. At this level, classes can contain variables in the form of properties (which we'll explain to you later) and method declarations & definitions.
+
+Within your class files, methods are required in order to contain specific sets of instructions that can be referenced by outside from outside classes. Methods can be seen as the counties in our metaphor. Arguments are variables passed into the scope of the method from the context in which the method is being called. They can then access those argument variables in their local context.  Method bodies are the highest level of scope that employs curly braces (`{``}`) to mark their enclosures.
+
+Inside of method bodies, conditionals and loops also employ curly braces (`{``}`) to enclose their scopes. These scopes can be nested without any hard limits similar to how a city can be further divided into districts, neighborhoods, street blocks, and even individual lots, but there comes a point when this gets unwieldy. **It is considered bad practice to nest further than three scopes deep within a method body.** (*If you find yourself composing deeply-nested code, you should re-think your logical flow or create helper methods to break up the nesting.*)
+
+**Note:** *It's actually legal to open your own scopes outside of the context of any logic flow statements just by adding curly braces around a piece of code. It’s unusual to do this, however, and should be avoided as bad practice.*
+
+## Context Inclusion
+
+In a similar way that national laws are applicable at the state, county, and city levels, a given context includes everything in the contexts in a direct line above it. However, once a context ends, the variables declared within it are no longer accessible (in most cases they are actually dereferenced and released from memory).
+
+Global variables are "global" because they are included in every context throughout the application. At a more local level, such as within a method body, context inclusion can look like this:
 
 ```objc
-NSInteger x = 2;
-if(x > 1) {
-     NSInteger x = 5;   // this x “shadows” the outer x above; it is independent but has the same name.
-     NSLog(@“x in the if statement: %d”, x);  // prints 5
+NSInteger x = 5
+NSLog(@"x: %li", x);
+
+if (x < 10 ) {
+	x = 7;             // 'x' is in context so we can access it 
+	NSLog(@"x: %li, x);
 }
-
-NSLog(@“x after the if statement: %d”, x);  // prints 2
+NSLog(@"x: %li", x);  // 'x' remains altered
 ```
+This will print: 
 
-It worked! Re-declaring a variable already defined in a parent scope is called **shadowing**. Shadowing is dangerous and confusing. If one part of your code was expecting the outer scope’s value (or type!) for the variable name -- well, bad things will happen. You will probably get a compiler warning if you shadow a variable. **Don't do this.**
+```
+x: 5
+x: 7
+x: 7
+```
+Our variable `x` remains altered because it was declared in the wider context. The redefinition of `x` belongs to a more localized context which will only run if the condition is met.
 
-Note though that shadowing is only possible with variables from *outer* scopes. Trying to redefine a variable in the same scope is an error:
+**Advanced:** *Classes gain knowledge of other classes through using* `#import` *to read the header files of another class and add its properties and method definitions to its context lexicon.*
+
+## Context Exclusion
+
+However, a more general context will not include variables declared in a localized contexts which it contains. Let's declare a new variable `y` inside the `if` statement:
 
 ```objc
-NSInteger x = 1;
-NSLog(@"first x: %d", x);
+NSInteger x = 5
+NSLog(@"x: %li", x);
 
-NSInteger x = 3;  // Compiler error: "Redefinition of x"
-NSLog(@"second x: %d", x);
+if (x < 10 ) {
+	x = 7;
+	NSInteger y = 3;   // a new variable inside the localized context
+	
+	NSLog(@"x: %li, y: %li", x, y);
+}
+NSLog(@"x: %li", x);  // 'y' is now "out of context"
 ```
+This will print: 
 
-# Arguments, scope, values and references, and you
+```
+x: 5
+x: 7, y:3
+x: 7
+```
+If we tried printing `y` after the `if` statement ended, the compiler would generate an error since it isn't contained in the current context.
 
-We can view method arguments as a way to get values from one scope into the scope of another function. Let's look at how arguments and scope interact:
+## Shadowing
+
+"**Shadowing**" or "variable masking" is permitted in Objective-C but it can lead to unexpected behavior if done unintentionally. Shadowing is the action of redeclaring a variable within a more localized context than its original declaration. As you should be aware, attempting to redeclare a variable in the same context generates a compiler error:
 
 ```objc
--(NSInteger)squareOfInteger:(NSInteger)anInteger
-{
-     anInteger = anInteger * anInteger;  // a slightly weird, but legal thing — you can use arguments as any other variable. but what does it mean?
-     return anInteger;  // returns 25
-}
+NSInteger x = 5;
 
--(void)main
-{
-     NSInteger x = 5;
-     NSInteger y = [self squareOfInteger:x];
-     // y is now 25, but what is x?!
-}
+NSInteger x = 7;   // Error: "Redefinition of 'x'"
 ```
-
-`squareOfInteger` has its own scope (curly braces -- rule #2!). It also does not inherit `main`’s scope (they’re not nested, and couldn’t be). So, `anInteger` in `squareOfInteger` is effectively a totally different thing than the `x` in `main`. Its value is assigned by the the act of passing it as an argument.
-
-This is **"pass by value”** — all we transmit when we call a method is the *value* of the variable we pass. Methods can change the value of the argument, but the code has no way to relate that value back to the original variable at the call site. So, `x` is still 5 at the end of `main`.
-
-### Objects and pass by value
-
-What does pass by value mean for object instances? What do you think the code below does?
+However, if we redeclared `x` within an `if` statement, for example, the change will only affect `x` within the localized context. Once we return to the wider context, however, `x` will again hold its value from when we were last in the wider context:
 
 ```objc
--(void)addInteger:(NSInteger)i toArray:(NSMutableArray *)array
-{
-    [array addObject:@(i)];
+NSInteger x = 5;
+NSLog(@"x: %li", x);
+
+if (x < 10) {
+    NSInteger x = 7;  // shadowing of 'x'
+    NSLog(@"x: %li", x);
 }
 
--(void)main
-{
-    NSMutableArray *myArray = [[NSMutableArray alloc] init];
-    [self addInteger:5 toArray:myArray];
-    NSLog(@"myArray now has %lu element(s)", myArray.count);
-}
+NSLog(@"x: %li", x);  // 'x' is 'unmasked'
 ```
+This will print:
 
-You may be in for a shock -- the output is "myArray now has 1 element(s)"! I know, I know. You just read about how there's this scope stuff and pass-by-value, but I promise this makes total sense.
+```
+x: 5
+x: 7
+x: 5
+```
+Shadowing is something that you will want to avoid in most cases. There are few situations in which you will find it useful. We're explaining it here so that you can recognize it in order to avoid mistakes that it can cause.
 
-The `*` in object types is for “pointer”, which essentially means the *value* of variables of that type is a **reference** to an instance. So, when we pass an object to a method, the method actually does get the *same reference* as our original variable (since that reference is the value). So, calling mutating methods on an object argument (e.g. an `NSMutableArray`) in a method will do the expected thing, and mutate the original (and only) array!
+Avoiding unintional shadowing is one reason to keep your variables names descriptive, even with integers. **The wider the scope of a variable, the more specific its name should be.** In Objective-C, single-letter variable names are only regarded as acceptable for highly-localized integers with short lifespans such as `NSUInteger i` with `for` loops.
 
-So, how about this:
+## Arguments: Passing In Values
+
+As mentioned above, methods can accept a value from outside their current context heirarchy in the form of an argument. What's worth remarking about arguments is that they are a form of passing values "horizontally" between separate contexts rather than "vertically" up or down a global-to-local chain.
+
+In the following example, we've created a `customMethod` that calls a "helper method" `addInteger:toArray:` in order to outsource some of its functionality. (*Notice that it sends the method call to* `self` *since it is calling a method within the same class file.*)
+
+It requires two arguments, an `NSInteger` named `i` and a mutable array named `array`. Via the method call, the values are passed horizontally from the context of `customMethod` into the separate context of `addInteger:toArray:`. This is "horizontal" passing of values works between methods of different classes as well.
+
 
 ```objc
--(void)removeAllElementsFromArray:(NSMutableArray *)array
-{
-    array = [[NSMutableArray alloc] init];
+-(void)customMethod {
+   NSMutableArray *myArray = [[NSMutableArray alloc] init];
+   [self addInteger:5 toArray:myArray];
+   NSLog(@"myArray now has %lu element(s)", myArray.count);
 }
 
--(void)main
-{
-    NSMutableArray *myArray = [[NSMutableArray alloc] init];
-    [myArray addObject:@"hello"];
-    [myArray addObject:@"world"];
-    
-    [self removeAllElementsFromArray:myArray];
+-(void)addInteger:(NSInteger)i toArray:(NSMutableArray *)array {
+   [array addObject:@(i)];
 }
 ```
+This will print: `myArray now has 1 element(s)`, which in this case will be an `NSNumber` holding the value `5`.
 
-Do you think `-removeAllElementsFromArray:` works as expected?
-
-### Pointers
-
-*(This section has no real bearing on the lab, but if you ever see two asterisks in a data type, or a primitive type with an asterisk, come back here as a jumping-off point. This gets a bit more advanced, so if it doesn't entirely make sense right now just move on to the assignment.)*
-
-If you want to mutate primitives from a function, well… you need a pointer to the primitive. It's the same deal as objects — a value that is a reference to a primitive. The array block methods that have `BOOL *stop` arguments are [an example](https://developer.apple.com/library/prerelease/ios/documentation/Cocoa/Reference/Foundation/Classes/NSArray_Class/index.html#//apple_ref/occ/instm/NSArray/indexesOfObjectsPassingTest:).
-
-And if you want to really reassign an object parameter? Pointers to pointers. `NSError **` arguments are the only time you're likely to see these.
-
-You should very rarely have to deal with things like those. 99% of the time you do, it will be the `NSError **` or `BOOL *` case, which you can just treat as opaque patterns if you don’t feel like learning the ins and outs of pointers. They’re incredibly powerful but frequently confusing and error-prone. The good news is that if you stick within the Objective-C world of classes and methods, you’ll rarely have to deal with them except in name only.
+This functionality plays heavily into the "object" nature of Objective-C (which we'll discuss in more detail later) that makes it such a powerful language.
 
 
-# Assignment:
-
-1. Write a method that takes a mutable array and a string as parameters. It should return the array with the string added, but *must not modify* the original array. (Hint: you'll need some way to create a *copy* of the incoming array.)
-
-2. Write a method that takes an array and returns the number of elements in the array that are in all caps. You’ll need a `for` loop, but think about how the scope will work such that your count variable is available at the end of the method.
-
-3. Rewrite `-removeAllElementsFromArray:` from the example above so that it actually works.
-
-Write these methods in your app delegate. See the app delegate header or the tests for the appropriate method names.
