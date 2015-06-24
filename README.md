@@ -6,7 +6,7 @@
 2. Distinguish scope from context, and know how to identify both.
 3. Recognize context inclusion and exclusion.
 4. Avoid the pitfall of unintentional "shadowing".
-5. Realize the value of passing variables "horizontally" through method arguments.
+5. Realize the value of passing variables through method arguments.
 
 ## Scope: What and Why?
 
@@ -36,21 +36,21 @@ So how does this image apply to programming?
 
 #### The Levels of Scope
 
-The "levels of governance" for scope begins at the level of an entire application. This is called "global" scope and refers to variables accessible from anywhere in your code. (We'll discuss declaring and using global variables in more detail later.) This is that "national" level of your code—the context that belongs to everything.
+The "levels of governance" for scope begins at the level of an entire application. This is called "global" scope and refers to variables accessible from anywhere in your code. This is that "national" level of your code—the context that belongs to everything.
 
-Within your application, each of your class files in the project navigator represents their own scopes. These are the first division and be can be seen as the states or provinces to your code. The class files use `@interface` & `@end` or `@implementation` & `@end` to enclose the declarations of their scopes. At this level, classes can contain variables in the form of properties (which we'll explain to you later) and method declarations & definitions.
+**Note:** *We'll discuss declaring and using global variables in more detail later, but you should avoid using them until much later in the course: while they do have some uses they are a common source of problems.*
 
-Within your class files, methods are required in order to contain specific sets of instructions that can be referenced by outside from outside classes. Methods can be seen as the counties in our metaphor. Arguments are variables passed into the scope of the method from the context in which the method is being called. They can then access those argument variables in their local context.  Method bodies are the highest level of scope that employs curly braces (`{``}`) to mark their enclosures.
+Within your application, each of your class files in the project navigator represents a separate context. These class files can be seen as the states or provinces to your code. At this level, classes can contain variables in the form of properties (which we'll explain to you later) and method declarations & definitions.
 
-Inside of method bodies, conditionals and loops also employ curly braces (`{``}`) to enclose their scopes. These scopes can be nested without any hard limits similar to how a city can be further divided into districts, neighborhoods, street blocks, and even individual lots, but there comes a point when this gets unwieldy. **It is considered bad practice to nest further than three scopes deep within a method body.** (*If you find yourself composing deeply-nested code, you should re-think your logical flow or create helper methods to break up the nesting.*)
+Within your class files, methods can be seen as the counties in our metaphor. Arguments are variables passed into the context of the method from the context in which the method is being called. They can then access those argument variables from within their local context. Method bodies employ curly braces (`{``}`) to mark their enclosures.
 
-**Note:** *It's actually legal to open your own scopes outside of the context of any logic flow statements just by adding curly braces around a piece of code. It’s unusual to do this, however, and should be avoided as bad practice.*
+Inside of method bodies, conditionals and loops also employ curly braces (`{``}`) to enclose their contexts. These contexts can be nested without any hard limits similar to how a city can be further divided into districts, neighborhoods, street blocks, and even individual lots.
 
 ## Context Inclusion
 
 In a similar way that national laws are applicable at the state, county, and city levels, a given context includes everything in the contexts in a direct line above it. However, once a context ends, the variables declared within it are no longer accessible (in most cases they are actually dereferenced and released from memory).
 
-Global variables are "global" because they are included in every context throughout the application. At a more local level, such as within a method body, context inclusion can look like this:
+In a similar way, variables from a given context are available inside all of the more localized contexts within it. An example of this inclusiveness can look like this:
 
 ```objc
 NSInteger x = 5
@@ -75,7 +75,7 @@ Our variable `x` remains altered because it was declared in the wider context. T
 
 ## Context Exclusion
 
-However, a more general context will not include variables declared in a localized contexts which it contains. Let's declare a new variable `y` inside the `if` statement:
+However, a more general context will not include variables declared in a localized contexts which it contains. Let's declare a new variable `y` inside the `if` statement, then try printing it after the `if` statement closes:
 
 ```objc
 NSInteger x = 5
@@ -87,16 +87,17 @@ if (x < 10 ) {
 	
 	NSLog(@"x: %li, y: %li", x, y);
 }
-NSLog(@"x: %li", x);  // 'y' is now "out of context"
+NSLog(@"x: %li, y: %li", x, y);  // 'y' is now "out of context"
 ```
-This will print: 
+This will generate a compiler error: 
 
 ```
-x: 5
-x: 7, y:3
-x: 7
+Use of undeclared identifier 'y'.
 ```
-If we tried printing `y` after the `if` statement ended, the compiler would generate an error since it isn't contained in the current context.
+
+![ExampleError_use_of_undeclared_identifier](https://curriculum-content.s3.amazonaws.com/reading-ios-variable-scope/reading-ios-variable-scope/ExampleError_use_of_undeclared_identifier.png)
+
+This error message appears because `y` has been released and does not exist in the current context.
 
 ## Shadowing
 
@@ -107,7 +108,14 @@ NSInteger x = 5;
 
 NSInteger x = 7;   // Error: "Redefinition of 'x'"
 ```
+
+![ExampleError_redefinition](https://curriculum-content.s3.amazonaws.com/reading-ios-variable-scope/reading-ios-variable-scope/ExampleError_redefinition.png)
+
+**Note:** *This is a case of a minor semantic difference between Xcode's terminology and the terminology of these lessons. If it had been up to him, this author would have written the error code above to read* `Redeclaration of 'x'`.
+
 However, if we redeclared `x` within an `if` statement, for example, the change will only affect `x` within the localized context. Once we return to the wider context, however, `x` will again hold its value from when we were last in the wider context:
+
+**~ Do NOT follow this example in your work! ~**
 
 ```objc
 NSInteger x = 5;
@@ -129,16 +137,15 @@ x: 5
 ```
 Shadowing is something that you will want to avoid in most cases. There are few situations in which you will find it useful. We're explaining it here so that you can recognize it in order to avoid mistakes that it can cause.
 
-Avoiding unintional shadowing is one reason to keep your variables names descriptive, even with integers. **The wider the scope of a variable, the more specific its name should be.** In Objective-C, single-letter variable names are only regarded as acceptable for highly-localized integers with short lifespans such as `NSUInteger i` with `for` loops.
+Avoiding unintentional shadowing is one reason to keep your variables names descriptive, even with integers. **The wider the scope of a variable, the more specific its name should be.** In Objective-C, single-letter variable names are only regarded as acceptable for highly-localized integers with short lifespans such as `NSUInteger i` with `for` loops. After the initial declaration of the variable, you'll be able to rely on autocomplete to finish the names for you, so let your variable and method names be as verbose as needed!
 
 ## Arguments: Passing In Values
 
-As mentioned above, methods can accept a value from outside their current context heirarchy in the form of an argument. What's worth remarking about arguments is that they are a form of passing values "horizontally" between separate contexts rather than "vertically" up or down a global-to-local chain.
+As mentioned above, methods can accept a value from outside their current context heirarchy in the form of an argument. What's worth remarking about arguments is that they are a form of passing values between separated contexts.
 
 In the following example, we've created a `customMethod` that calls a "helper method" `addInteger:toArray:` in order to outsource some of its functionality. (*Notice that it sends the method call to* `self` *since it is calling a method within the same class file.*)
 
-It requires two arguments, an `NSInteger` named `i` and a mutable array named `array`. Via the method call, the values are passed horizontally from the context of `customMethod` into the separate context of `addInteger:toArray:`. This is "horizontal" passing of values works between methods of different classes as well.
-
+It requires two arguments, an `NSInteger` named `i` and a mutable array named `array`. Via the method call, the values are passed from the context of `customMethod` into the separate context of `addInteger:toArray:`.
 
 ```objc
 -(void)customMethod {
