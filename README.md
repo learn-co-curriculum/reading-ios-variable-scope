@@ -99,9 +99,7 @@ NSInteger x = 7;   // Error: "Redefinition of 'x'"
 
 ![ExampleError_redefinition](https://curriculum-content.s3.amazonaws.com/reading-ios-variable-scope/reading-ios-variable-scope/ExampleError_redefinition.png)
 
-**Note:** *This is a case of a minor semantic difference between Xcode's terminology and the terminology of these lessons. If it had been up to him, this author would have written the error code above to read* `Redeclaration of 'x'`.
-
-However, if we redeclared `x` within an `if` statement, for example, the change will only affect `x` within the local scope of the `if` statement. Once we return to the wider scope, however, `x` will again hold its value from when we were last in the wider scope:
+However, if we redefined `x` within an `if` statement, for example, the change will only affect `x` within the local scope of the `if` statement. Once we return to the wider scope, however, `x` will again hold its value from when we were last in the wider scope:
 
 **~ Do NOT follow this example in your work! ~**
 
