@@ -129,20 +129,28 @@ Avoiding unintentional shadowing is one reason to keep your variables names desc
 
 As mentioned above, methods can accept a value from outside their scope in the form of an argument. What's worth remarking about arguments is that they are a form of passing values between separated scopes.
 
-In the following example, we've created a `customMethod` that calls a "helper method" `addInteger:toArray:` in order to outsource some of its functionality. (*Notice that it sends the method call to* `self` *since it is calling a method within the same class file.*) This helper method requires two arguments, an `NSInteger` named `i` and a mutable array named `array`. Via the method call, the values are passed from the local scope of `customMethod` into the separate local scope of `addInteger:toArray:`.
+In the following example, we've created a "helper method" `addInteger:toMutableArray:` that we're calling within the `application:didFinishLaunchingWithOptions:` method. **Notice that the method call is sent to** `self` **since the recipient of the method call is itself.** 
+
+This `addInteger:toMutableArray:` helper method requires two arguments, an `NSInteger` named `integer` and a mutable array named `mutableArray`. Via the method call, the argument values are passed from the local scope of `application:didFinishLaunchingWithOptions:` method into the separate local scope of the `addInteger:toMutableArray:` method.
 
 ```objc
--(void)customMethod {
-   NSMutableArray *myArray = [[NSMutableArray alloc] init];
-   [self addInteger:5 toArray:myArray];
-   NSLog(@"myArray now has %lu element(s)", myArray.count);
+-(BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    // Override point for customization after application launch.
+
+    NSMutableArray *mArray = [[NSMutableArray alloc] init];
+    
+    [self addInteger:5 toMutableArray:mArray];  // calling the helper method
+    
+    NSLog(@"The array now has %lu element(s).", mArray.count);
+
+    return YES;
 }
 
--(void)addInteger:(NSInteger)i toArray:(NSMutableArray *)array {
-   [array addObject:@(i)];
+-(void)addInteger:(NSInteger)integer toMutableArray:(NSMutableArray *)mutableArray {
+   [mutableArray addObject:@(integer)];
 }
 ```
-This will print: `myArray now has 1 element(s)`, which in this case will be an `NSNumber` holding the value `5`.
+This will print: `mArray now has 1 element(s)`, which in this case will be an `NSNumber` holding the value `5`.
 
 Arguments in method calls are one of the easiest ways to pass values around in your application.
 
