@@ -155,3 +155,5 @@ This will print: `mArray now has 1 element(s)`, which in this case will be an `N
 Arguments in method calls are one of the easiest ways to pass values around in your application.
 
 
+
+<a href='https://learn.co/lessons/reading-ios-variable-scope' data-visibility='hidden'>View this lesson on Learn.co</a>
