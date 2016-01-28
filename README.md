@@ -156,4 +156,4 @@ Arguments in method calls are one of the easiest ways to pass values around in y
 
 
 
-<a href='https://learn.co/lessons/reading-ios-variable-scope' data-visibility='hidden'>View this lesson on Learn.co</a>
+<p data-visibility='hidden'>View <a href='https://learn.co/lessons/reading-ios-variable-scope' title='Variable Scope'>Variable Scope</a> on Learn.co and start learning to code for free.</p>
